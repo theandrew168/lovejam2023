@@ -117,6 +117,11 @@ function pick(x, y)
     return nil
 end
 
+function love.load(arg)
+    local font = love.graphics.newFont("font/hieros.ttf", 36)
+    love.graphics.setFont(font)
+end
+
 down = false
 function love.update(dt)
     local x, y = love.mouse.getPosition()
@@ -192,6 +197,10 @@ function love.draw(dt)
 
     -- draw pieces
     -- TODO
+
+    -- font test
+    love.graphics.setColor(1,1,1)
+    love.graphics.print("Hello Khet!", windowWidth / 2 - 48, 8)
     
     love.graphics.setColor(1,1,1)
     local mx, my = love.mouse.getPosition()
