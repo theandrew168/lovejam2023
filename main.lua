@@ -89,7 +89,7 @@ function dist(x1, y1, x2, y2)
 end
 
 function pick(x, y)
-	local windowWidth, windowHeight = love.graphics.getDimensions()
+    local windowWidth, windowHeight = love.graphics.getDimensions()
 
     local redX, redY = button.xoff, button.yoff
     local redDist = dist(x, y, redX, redY)
@@ -134,7 +134,7 @@ function love.update(dt)
 end
 
 function love.draw(dt)
-	local windowWidth, windowHeight = love.graphics.getDimensions()
+    local windowWidth, windowHeight = love.graphics.getDimensions()
 
     -- draw background
     love.graphics.clear(color.black)
@@ -194,6 +194,6 @@ function love.draw(dt)
     -- TODO
     
     love.graphics.setColor(1,1,1)
-	local mx, my = love.mouse.getPosition()
-	love.graphics.line(windowWidth/2, windowHeight/2, mx, my)
+    local mx, my = love.mouse.getPosition()
+    love.graphics.line(windowWidth/2, windowHeight/2, mx, my)
 end
