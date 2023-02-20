@@ -70,6 +70,40 @@ board = {
     },
 }
 
+-- rotation: 1, 2, 3, 4
+-- obelisk: all the same
+-- pharaoh: up, right, down, left
+-- pyramid: NE, SE, SW, NW (mirror direction)
+-- djed:    NE, SE, SW, NW (mirror direction)
+
+-- https://www.ultraboardgames.com/khet-the-laser-game/game-rules.php
+classic = {
+    {tile = {5, 1}, kind = "obelisk", color = "red", rotation = 1},
+    {tile = {6, 1}, kind = "pharoah", color = "red", rotation = 3},
+    {tile = {7, 1}, kind = "obelisk", color = "red", rotation = 1},
+    {tile = {8, 1}, kind = "pyramid", color = "red", rotation = 2},
+    {tile = {3, 2}, kind = "pyramid", color = "red", rotation = 3},
+    {tile = {4, 3}, kind = "pyramid", color = "silver", rotation = 4},
+    {tile = {1, 4}, kind = "pyramid", color = "red", rotation = 1},
+    {tile = {3, 4}, kind = "pyramid", color = "silver", rotation = 3},
+    {tile = {5, 4}, kind = "djed", color = "red", rotation = 1},
+    {tile = {6, 4}, kind = "djed", color = "red", rotation = 2},
+    {tile = {8, 4}, kind = "pyramid", color = "red", rotation = 2},
+    {tile = {10, 4}, kind = "pyramid", color = "silver", rotation = 4},
+    {tile = {1, 5}, kind = "pyramid", color = "red", rotation = 2},
+    {tile = {3, 5}, kind = "pyramid", color = "silver", rotation = 4},
+    {tile = {5, 5}, kind = "djed", color = "silver", rotation = 2},
+    {tile = {6, 5}, kind = "djed", color = "silver", rotation = 1},
+    {tile = {8, 5}, kind = "pyramid", color = "red", rotation = 1},
+    {tile = {10, 5}, kind = "pyramid", color = "silver", rotation = 3},
+    {tile = {7, 6}, kind = "pyramid", color = "red", rotation = 2},
+    {tile = {8, 7}, kind = "pyramid", color = "silver", rotation = 1},
+    {tile = {3, 8}, kind = "pyramid", color = "silver", rotation = 4},
+    {tile = {4, 8}, kind = "obelisk", color = "silver", rotation = 1},
+    {tile = {5, 8}, kind = "pharoah", color = "silver", rotation = 1},
+    {tile = {6, 8}, kind = "obelisk", color = "silver", rotation = 1},
+}
+
 function calcTilePoly(x, y)
     local poly = {
         -- top left
@@ -117,10 +151,26 @@ function pick(x, y)
     return nil
 end
 
+game = {}
 function love.load(arg)
+    -- load the funky egyptian font
     local font = love.graphics.newFont("font/hieros.ttf", 36)
     love.graphics.setFont(font)
+
+    -- load the music / sfx
     soundtrack = love.audio.newSource("sounds/test.mp3", "stream")
+
+    -- initialize the game state
+    local mode = classic
+    for _, p in ipairs(mode) do
+        -- naive copy to keep layouts unmutated
+        table.insert(game, {
+            tile = {p.tile[1], p.tile[2]},
+            kind = p.kind,
+            color = p.color,
+            rotation = p.rotation,
+        })
+    end
 end
 
 down = false
@@ -200,12 +250,16 @@ function love.draw(dt)
     end
 
     -- draw pieces
-    -- TODO
+    love.graphics.setColor(1,0,1)
+    for _, p in ipairs(game) do
+        local poly = calcTilePoly(p.tile[1], p.tile[2])
+        love.graphics.polygon("fill", poly)
+    end
 
     -- font test
     love.graphics.setColor(1,1,1)
     love.graphics.print("Hello Khet!", windowWidth / 2 - 48, 8)
-    
+
     love.graphics.setColor(1,1,1)
     local mx, my = love.mouse.getPosition()
     love.graphics.line(windowWidth/2, windowHeight/2, mx, my)
