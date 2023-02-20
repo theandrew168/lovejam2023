@@ -71,6 +71,9 @@ function Board:update(dt)
     else
         down = false
     end
+    if love.keyboard.isDown("escape") then
+        return "pause"
+    end
 end
 
 function Board:draw(dt)

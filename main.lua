@@ -1,6 +1,7 @@
 local global = require("global")
 local MainMenu = require("state.mainmenu")
 local Board = require("state.board")
+local PauseMenu = require("state.pausemenu")
 
 -- red
 -- silver 
@@ -160,6 +161,8 @@ function love.update(dt)
     local transition = state:update(dt)
     if transition == "board" then
         state = Board.new()
+    elseif transition == "pause" then
+        state = PauseMenu.new()
     end
 
     if not soundtrack:isPlaying() then
