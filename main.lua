@@ -103,6 +103,8 @@ classic = {
     {tile = {5, 8}, kind = "pharoah", color = "silver", rotation = 1},
     {tile = {6, 8}, kind = "obelisk", color = "silver", rotation = 1},
 }
+paused = false
+love.keyboard.setKeyRepeat(false)
 
 function calcTilePoly(x, y)
     local poly = {
@@ -192,7 +194,30 @@ function love.update(dt)
     end
 end
 
+function love.keypressed( key )
+    print( key )
+    if key == "escape" then
+        paused = not paused
+    end
+end
+
 function love.draw(dt)
+    if paused then
+        drawPaused()
+    else
+        drawBoard()
+    end
+end
+
+function drawPaused()
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    love.graphics.clear(color.black)
+
+    love.graphics.setColor(1,1,1)
+    love.graphics.print("Game Paused!", windowWidth / 2 - 48, windowHeight / 4)
+end
+
+function drawBoard()
     local windowWidth, windowHeight = love.graphics.getDimensions()
 
     -- draw background
