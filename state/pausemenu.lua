@@ -10,7 +10,7 @@ end
 
 function PauseMenu:update(dt)
     if love.keyboard.isDown("space") then
-        return "pause"
+        return "board"
     end
 end
 
