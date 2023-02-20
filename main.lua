@@ -120,6 +120,7 @@ end
 function love.load(arg)
     local font = love.graphics.newFont("font/hieros.ttf", 36)
     love.graphics.setFont(font)
+    soundtrack = love.audio.newSource("sounds/test.mp3", "stream")
 end
 
 down = false
@@ -135,6 +136,9 @@ function love.update(dt)
         down = true
     else
         down = false
+    end
+    if not soundtrack:isPlaying( ) then
+        love.audio.play( soundtrack )
     end
 end
 
