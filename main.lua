@@ -1,3 +1,7 @@
+local global = require("global")
+local MainMenu = require("state.mainmenu")
+local Board = require("state.board")
+
 -- red
 -- silver 
 
@@ -103,58 +107,33 @@ classic = {
     {tile = {5, 8}, kind = "pharoah", color = "silver", rotation = 1},
     {tile = {6, 8}, kind = "obelisk", color = "silver", rotation = 1},
 }
-paused = false
-love.keyboard.setKeyRepeat(false)
 
-function calcTilePoly(x, y)
-    local poly = {
-        -- top left
-        size.box * (x - 1) + size.border + size.edge, size.box * (y - 1) + size.border + size.edge,
-        -- top right
-        size.box * (x - 1) + size.box + size.edge, size.box * (y - 1) + size.border + size.edge,
-        -- bottom right
-        size.box * (x - 1) + size.box + size.edge, size.box * (y - 1) + size.box + size.edge,
-        -- bottom left
-        size.box * (x - 1) + size.border + size.edge, size.box * (y - 1) + size.box + size.edge,
-    }
-    return poly
-end
 
-function dist(x1, y1, x2, y2)
-    return ((x2-x1)^2+(y2-y1)^2)^0.5
-end
+-- states:
+-- main menu -> exit, board
+--  start game w/ specific mode (classic, etc)
+--  exit game
+-- pause menu -> exit, board
+--  unpause, back to board (escape)
+--  exit game
+-- game over -> main menu
+--  any button takes back to main menu
+-- board -> pause, selection, laser
+--  pause the game (escape)
+--  select a piece (of current player's turn)
+--  click the laser button to end turn
+-- selection -> board, laser
+--  escape to deselect
+--  select a piece of your color on your turn
+--  move or rotate
+-- laser -> board, game over
+--  if pharoah hit, game over
+--  else do the animation and return to board
 
-function pick(x, y)
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-
-    local redX, redY = button.xoff, button.yoff
-    local redDist = dist(x, y, redX, redY)
-    if redDist <= button.radius then
-        return {"laser", "red"}
-    end
-
-    local silverX, silverY = windowWidth - button.xoff, windowHeight - button.yoff
-    local silverDist = dist(x, y, silverX, silverY)
-    if silverDist <= button.radius then
-        return {"laser", "silver"}
-    end
-
-    for ty = 1, board.height do
-        for tx = 1, board.width do
-            local poly = calcTilePoly(tx, ty)
-            local top, left = poly[2], poly[1]
-            local bottom, right = poly[6], poly[5]
-            if x >= left and x <= right and y >= top and y <= bottom then
-                return {"tile", tx, ty}
-            end
-        end
-    end
-
-    return nil
-end
-
-game = {}
 function love.load(arg)
+    -- init main menu state
+    state = MainMenu.new()
+
     -- load the funky egyptian font
     local font = love.graphics.newFont("font/hieros.ttf", 36)
     love.graphics.setFont(font)
@@ -163,10 +142,11 @@ function love.load(arg)
     soundtrack = love.audio.newSource("sounds/test.mp3", "stream")
 
     -- initialize the game state
+    global.tiles = {}
     local mode = classic
     for _, p in ipairs(mode) do
-        -- naive copy to keep layouts unmutated
-        table.insert(game, {
+        -- naive copy to keep game modes unmutated
+        table.insert(global.tiles, {
             tile = {p.tile[1], p.tile[2]},
             kind = p.kind,
             color = p.color,
@@ -177,115 +157,16 @@ end
 
 down = false
 function love.update(dt)
-    local x, y = love.mouse.getPosition()
-    if love.mouse.isDown(1) then
-        if not down then
-            local loc = pick(x, y)
-            if loc then
-                print(x, y, loc[1], loc[2], loc[3])
-            end
-        end
-        down = true
-    else
-        down = false
+    local transition = state:update(dt)
+    if transition == "board" then
+        state = Board.new()
     end
-    if not soundtrack:isPlaying( ) then
-        love.audio.play( soundtrack )
-    end
-end
 
-function love.keypressed( key )
-    print( key )
-    if key == "escape" then
-        paused = not paused
+    if not soundtrack:isPlaying() then
+        love.audio.play(soundtrack)
     end
 end
 
 function love.draw(dt)
-    if paused then
-        drawPaused()
-    else
-        drawBoard()
-    end
-end
-
-function drawPaused()
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-    love.graphics.clear(color.black)
-
-    love.graphics.setColor(1,1,1)
-    love.graphics.print("Game Paused!", windowWidth / 2 - 48, windowHeight / 4)
-end
-
-function drawBoard()
-    local windowWidth, windowHeight = love.graphics.getDimensions()
-
-    -- draw background
-    love.graphics.clear(color.black)
-
-    -- draw laser buttons
-    love.graphics.setColor(color.laser)
-    love.graphics.circle("fill",
-        -- top left
-        button.xoff,
-        button.yoff,
-        button.radius
-    )
-    love.graphics.circle("fill",
-        -- bottom right
-        windowWidth - button.xoff,
-        windowHeight - button.yoff,
-        button.radius
-    )
-
-    -- draw board background / border
-    love.graphics.setColor(color.darkGray)
-    love.graphics.polygon("fill",
-        -- top left
-        size.edge, size.edge,
-        -- top right
-        windowWidth - size.edge, size.edge,
-        -- bottom right
-        windowWidth - size.edge, windowHeight - size.edge,
-        -- bottom left
-        size.edge, windowHeight - size.edge
-    )
-
-    -- draw tiles
-    love.graphics.setColor(color.lightGray)
-    for y = 1, board.height do
-        for x = 1, board.width do
-            local poly = calcTilePoly(x, y)
-            love.graphics.polygon("fill", poly)
-        end
-    end
-
-    -- draw red tiles
-    love.graphics.setColor(color.red)
-    for _, p in ipairs(board.red) do
-        local poly = calcTilePoly(p[1], p[2])
-        love.graphics.polygon("fill", poly)
-    end
-
-    -- draw silver tiles
-    love.graphics.setColor(color.silver)
-    for _, p in ipairs(board.silver) do
-        local poly = calcTilePoly(p[1], p[2])
-        love.graphics.polygon("fill", poly)
-    end
-
-    -- draw pieces
-    love.graphics.setColor(1,0,1)
-    for _, p in ipairs(game) do
-        local poly = calcTilePoly(p.tile[1], p.tile[2])
-        love.graphics.polygon("fill", poly)
-    end
-
-    -- font test
-    love.graphics.setColor(1,1,1)
-    love.graphics.print("Hello Khet!", windowWidth / 2 - 48, 8)
-
-    love.graphics.setColor(1,1,1)
-    local mx, my = love.mouse.getPosition()
-    love.graphics.line(windowWidth/2, windowHeight/2, mx, my)
+    state:draw(dt)
 end
