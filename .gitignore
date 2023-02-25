@@ -1,4 +1,5 @@
 *.love
+web/
 
 # Compiled Lua sources
 luac.out

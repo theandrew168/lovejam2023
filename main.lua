@@ -13,8 +13,26 @@ local function calcTileRect(x, y)
     return xx, yy, ww, hh
 end
 
-local function buildLaserPath(tiles)
-    local path = {}
+local function buildLaserPath(board)
+    local path = {
+        {1,1},
+        {1,2},
+        {1,3},
+        {1,4},
+        {2,4},
+        {3,4},
+        {3,5},
+        {2,5},
+        {1,5},
+        {1,6},
+        {1,7},
+        {1,8},
+    }
+    return path
+end
+
+local function buildLaserLine(tiles)
+    local line = {}
     local idx = 1
 
     -- build first segment
@@ -24,25 +42,25 @@ local function buildLaserPath(tiles)
     -- check for left or right laser
     if t[1] == 1 then
         -- start at the top of the tile
-        table.insert(path, xx + (ww / 2))
-        table.insert(path, yy - const.size.border)
+        table.insert(line, xx + (ww / 2))
+        table.insert(line, yy - const.size.border)
     else
         -- start at the bottom of the tile
-        table.insert(path, xx + (ww / 2))
-        table.insert(path, yy + hh + const.size.border)
+        table.insert(line, xx + (ww / 2))
+        table.insert(line, yy + hh + const.size.border)
     end
 
     -- build remaining segments (center to center)
     while tiles[idx] ~= nil do
         local t = tiles[idx]
         local xx, yy, ww, hh = calcTileRect(t[1], t[2])
-        table.insert(path, xx + (ww / 2))
-        table.insert(path, yy + (hh / 2))
+        table.insert(line, xx + (ww / 2))
+        table.insert(line, yy + (hh / 2))
 
         idx = idx + 1
     end
 
-    return path
+    return line
 end
 
 local function pick(x, y)
@@ -147,6 +165,7 @@ function love.load(arg)
         time = nil,
         done = nil,
         path = nil,
+        line = nil,
     }
 
     -- initialize the board with the classic layout
@@ -178,24 +197,12 @@ function love.update(dt)
                 print(x, y, loc[1], loc[2], loc[3])
 
                 local what = loc[1]
-                if what == "laser" then
+                if what == "laser" and loc[2] == global.player then
                     global.laser.active = true
                     global.laser.time = love.timer.getTime()
                     global.laser.done = global.laser.time + 2
-                    global.laser.path = buildLaserPath({
-                        {1,1},
-                        {1,2},
-                        {1,3},
-                        {1,4},
-                        {2,4},
-                        {3,4},
-                        {3,5},
-                        {2,5},
-                        {1,5},
-                        {1,6},
-                        {1,7},
-                        {1,8},
-                    })
+                    global.laser.path = buildLaserPath(global.board)
+                    global.laser.line = buildLaserLine(global.laser.path)
                 end
 
                 -- TODO: handle tile selection
@@ -220,8 +227,32 @@ function love.update(dt)
         global.laser.time = global.laser.time + dt
         if global.laser.time > global.laser.done then
             global.laser.active = false
+
             -- TODO: remove any deleted piece
-            -- TODO: determine and declare game over
+
+            -- determine and declare game over
+            local redHasPharaoh, silverHasPharaoh = false, false
+            for _, p in ipairs(global.board) do
+                if p.kind == "pharaoh" then
+                    if p.color == "red" then
+                        redHasPharaoh = true
+                    else
+                        silverHasPharaoh = true
+                    end
+                end
+            end
+
+            -- TODO: draw text, any key restarts?
+            if not redHasPharaoh then
+                print("Silver player wins!")
+                love.event.quit()
+            elseif not silverHasPharaoh then
+                print("Red player wins!")
+                love.event.quit()
+            end
+
+            -- switch player text
+            global.player = global.player == "red" and "silver" or "red"
         end
     end
 end
@@ -288,15 +319,24 @@ function love.draw(dt)
     if global.laser.active then
         love.graphics.setColor(const.color.laser)
         love.graphics.setLineWidth(4)
-        love.graphics.line(global.laser.path)
+        love.graphics.line(global.laser.line)
     end
 
-    -- font test
+    -- print text (top)
     local text = "Welcome to Khet!"
     local w, h = global.font:getWidth(text), global.font:getHeight(text)
     love.graphics.setColor(1,1,1)
     love.graphics.print(text,
         (windowWidth / 2) - (w / 2),
         (const.size.edge - h) / 2
+    )
+
+    -- print current player (bottom)
+    local text = "Player: " .. (global.player == "red" and "Red" or "Silver")
+    local w, h = global.font:getWidth(text), global.font:getHeight(text)
+    love.graphics.setColor(1,1,1)
+    love.graphics.print(text,
+        (windowWidth / 2) - (w / 2),
+        windowHeight - const.size.edge
     )
 end
