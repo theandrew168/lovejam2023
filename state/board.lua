@@ -52,7 +52,7 @@ function drawPiece(p)
     -- djed:    NE, SE, SW, NW (mirror direction)
 
     love.graphics.setColor(0, 0, 0)
-    love.graphics.setLineWidth(2)
+    love.graphics.setLineWidth(4)
 
     if p.kind == "obelisk" then
         -- no visible rotation
@@ -214,7 +214,7 @@ function Board:draw(dt)
 
     if self.laser.active then
         love.graphics.setColor(const.color.laser)
-        love.graphics.setLineWidth(6)
+        love.graphics.setLineWidth(4)
         love.graphics.line(self.laser.path)
     end
 
