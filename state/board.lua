@@ -1,20 +1,15 @@
+local const = require("const")
 local global = require("global")
 
 local Board = {}
 Board.__index = Board
 
-function calcTilePoly(x, y)
-    local poly = {
-        -- top left
-        size.box * (x - 1) + size.border + size.edge, size.box * (y - 1) + size.border + size.edge,
-        -- top right
-        size.box * (x - 1) + size.box + size.edge, size.box * (y - 1) + size.border + size.edge,
-        -- bottom right
-        size.box * (x - 1) + size.box + size.edge, size.box * (y - 1) + size.box + size.edge,
-        -- bottom left
-        size.box * (x - 1) + size.border + size.edge, size.box * (y - 1) + size.box + size.edge,
-    }
-    return poly
+function calcTileRect(x, y)
+    local xx = const.size.box * (x - 1) + const.size.border + const.size.edge
+    local yy = const.size.box * (y - 1) + const.size.border + const.size.edge
+    local ww = const.size.tile
+    local hh = const.size.tile
+    return xx, yy, ww, hh
 end
 
 function dist(x1, y1, x2, y2)
@@ -24,24 +19,23 @@ end
 function pick(x, y)
     local windowWidth, windowHeight = love.graphics.getDimensions()
 
-    local redX, redY = button.xoff, button.yoff
+    local redX, redY = const.button.xoff, const.button.yoff
     local redDist = dist(x, y, redX, redY)
-    if redDist <= button.radius then
+    if redDist <= const.button.radius then
         return {"laser", "red"}
     end
 
-    local silverX, silverY = windowWidth - button.xoff, windowHeight - button.yoff
+    local silverX = windowWidth - const.button.xoff
+    local silverY = windowHeight - const.button.yoff
     local silverDist = dist(x, y, silverX, silverY)
-    if silverDist <= button.radius then
+    if silverDist <= const.button.radius then
         return {"laser", "silver"}
     end
 
-    for ty = 1, board.height do
-        for tx = 1, board.width do
-            local poly = calcTilePoly(tx, ty)
-            local top, left = poly[2], poly[1]
-            local bottom, right = poly[6], poly[5]
-            if x >= left and x <= right and y >= top and y <= bottom then
+    for ty = 1, const.board.height do
+        for tx = 1, const.board.width do
+            local xx, yy, ww, hh = calcTileRect(tx, ty)
+            if x >= xx and x <= xx + ww and y >= yy and y <= yy + hh then
                 return {"tile", tx, ty}
             end
         end
@@ -80,64 +74,65 @@ function Board:draw(dt)
     local windowWidth, windowHeight = love.graphics.getDimensions()
 
     -- draw background
-    love.graphics.clear(color.black)
+    love.graphics.clear(const.color.black)
 
     -- draw laser buttons
-    love.graphics.setColor(color.laser)
+    love.graphics.setColor(const.color.laser)
     love.graphics.circle("fill",
         -- top left
-        button.xoff,
-        button.yoff,
-        button.radius
+        const.button.xoff,
+        const.button.yoff,
+        const.button.radius
     )
     love.graphics.circle("fill",
         -- bottom right
-        windowWidth - button.xoff,
-        windowHeight - button.yoff,
-        button.radius
+        windowWidth - const.button.xoff,
+        windowHeight - const.button.yoff,
+        const.button.radius
     )
 
     -- draw board background / border
-    love.graphics.setColor(color.darkGray)
-    love.graphics.polygon("fill",
-        -- top left
-        size.edge, size.edge,
-        -- top right
-        windowWidth - size.edge, size.edge,
-        -- bottom right
-        windowWidth - size.edge, windowHeight - size.edge,
-        -- bottom left
-        size.edge, windowHeight - size.edge
+    love.graphics.setColor(const.color.darkGray)
+    love.graphics.rectangle("fill",
+        const.size.edge,
+        const.size.edge,
+        windowWidth - (const.size.edge * 2),
+        windowHeight - (const.size.edge * 2)
     )
 
     -- draw tiles
-    love.graphics.setColor(color.lightGray)
-    for y = 1, board.height do
-        for x = 1, board.width do
-            local poly = calcTilePoly(x, y)
-            love.graphics.polygon("fill", poly)
+    love.graphics.setColor(const.color.lightGray)
+    for y = 1, const.board.height do
+        for x = 1, const.board.width do
+            local xx, yy, ww, hh = calcTileRect(x, y)
+            love.graphics.rectangle("fill", xx, yy, ww, hh)
         end
     end
 
     -- draw red tiles
-    love.graphics.setColor(color.red)
-    for _, p in ipairs(board.red) do
-        local poly = calcTilePoly(p[1], p[2])
-        love.graphics.polygon("fill", poly)
+    love.graphics.setColor(const.color.red)
+    for _, p in ipairs(const.board.red) do
+        local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- draw silver tiles
-    love.graphics.setColor(color.silver)
-    for _, p in ipairs(board.silver) do
-        local poly = calcTilePoly(p[1], p[2])
-        love.graphics.polygon("fill", poly)
+    love.graphics.setColor(const.color.silver)
+    for _, p in ipairs(const.board.silver) do
+        local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- draw pieces
-    love.graphics.setColor(1,0,1)
     for _, p in ipairs(global.tiles) do
-        local poly = calcTilePoly(p.tile[1], p.tile[2])
-        love.graphics.polygon("fill", poly)
+        if p.color == "red" then
+            love.graphics.setColor(1,0,1)
+        else
+            love.graphics.setColor(1,0,1)
+        end
+
+        local xx, yy, ww, hh = calcTileRect(p.tile[1], p.tile[2])
+        love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- font test
