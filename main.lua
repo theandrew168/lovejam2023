@@ -255,7 +255,7 @@ function love.load(arg)
     love.graphics.setFont(global.font)
 
     -- load the music
-    global.music = love.audio.newSource("music/test.mp3", "stream")
+    global.music = love.audio.newSource("music/khet.mp3", "stream")
 
     -- initialize the game state
     global.player = "silver"
