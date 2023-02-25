@@ -181,7 +181,7 @@ function Board:draw(dt)
     end
 
     -- draw pieces
-    for _, p in ipairs(global.tiles) do
+    for _, p in ipairs(global.board) do
         drawPiece(p)
     end
 

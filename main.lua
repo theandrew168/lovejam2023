@@ -31,7 +31,8 @@ local PauseMenu = require("state.pausemenu")
 local state
 function love.load(arg)
     -- init main menu state
-    state = MainMenu.new()
+    -- TODO: swap to main menu once it is ready
+    state = Board.new()
 
     -- load the funky egyptian font
     local font = love.graphics.newFont("font/hieros.ttf", 36)
@@ -41,11 +42,11 @@ function love.load(arg)
     soundtrack = love.audio.newSource("sounds/test.mp3", "stream")
 
     -- initialize the game state
-    global.tiles = {}
+    global.board = {}
     local mode = const.layout.classic
     for _, p in ipairs(mode) do
         -- naive copy to keep game modes unmutated
-        table.insert(global.tiles, {
+        table.insert(global.board, {
             tile = {p.tile[1], p.tile[2]},
             kind = p.kind,
             color = p.color,
