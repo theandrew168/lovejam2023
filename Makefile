@@ -6,7 +6,7 @@ default: build
 
 .PHONY: build
 build:
-	zip -o khet.love main.lua conf.lua global.lua state/* font/* sounds/*
+	zip -o khet.love *.lua state/* font/* sounds/*
 
 .PHONY: run
 run: build
