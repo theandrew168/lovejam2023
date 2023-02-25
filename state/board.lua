@@ -63,16 +63,40 @@ function drawPiece(p)
     -- djed:    NE, SE, SW, NW (mirror direction)
 
     love.graphics.setColor(0, 0, 0)
-    if p.kind == "pyramid" then
-        love.graphics.line(xx, yy, xx + ww, yy + hh)
-        love.graphics.line(xx, yy + hh, xx + (ww / 2), yy + (hh / 2))
-    elseif p.kind == "obelisk" then
+    if p.kind == "obelisk" then
+        -- no visible rotation
         love.graphics.rectangle("line", xx + (ww / 4), yy + (hh / 4), ww / 2, hh / 2)
     elseif p.kind == "djed" then
-        love.graphics.line(xx, yy, xx + ww, yy + hh)
+        -- two visible rotations
+        if p.rotation == 1 or p.rotation == 3 then
+            love.graphics.line(xx, yy, xx + ww, yy + hh)
+        else
+            love.graphics.line(xx, yy + hh, xx + ww, yy)
+        end
     elseif p.kind == "pharaoh" then
-        love.graphics.line(xx, yy + (hh / 2), xx + ww, yy + (hh / 2))
-        love.graphics.circle("line", xx + (ww / 2), yy + (hh / 2), ww / 4)
+        -- two visible rotations
+        if p.rotation == 1 or p.rotation == 3 then
+            love.graphics.line(xx, yy + (hh / 2), xx + ww, yy + (hh / 2))
+            love.graphics.circle("line", xx + (ww / 2), yy + (hh / 2), ww / 4)
+        else
+            love.graphics.line(xx + (ww / 2), yy, xx + (ww / 2), yy + hh)
+            love.graphics.circle("line", xx + (ww / 2), yy + (hh / 2), ww / 4)
+        end
+    elseif p.kind == "pyramid" then
+        -- four visible rotations
+        if p.rotation == 1 then
+            love.graphics.line(xx, yy, xx + ww, yy + hh)
+            love.graphics.line(xx, yy + hh, xx + (ww / 2), yy + (hh / 2))
+        elseif p.rotation == 2 then
+            love.graphics.line(xx, yy + hh, xx + ww, yy)
+            love.graphics.line(xx, yy, xx + (ww / 2), yy + (hh / 2))
+        elseif p.rotation == 3 then
+            love.graphics.line(xx, yy, xx + ww, yy + hh)
+            love.graphics.line(xx + (ww / 2), yy + (hh / 2), xx + ww, yy)
+        elseif p.rotation == 4 then
+            love.graphics.line(xx, yy + hh, xx + ww, yy)
+            love.graphics.line(xx + (ww / 2), yy + (hh / 2), xx + ww, yy + hh)
+        end
     end
 end
 
@@ -164,10 +188,6 @@ function Board:draw(dt)
     -- font test
     love.graphics.setColor(1,1,1)
     love.graphics.print("Hello Khet!", windowWidth / 2 - 48, 8)
-
-    love.graphics.setColor(1,1,1)
-    local mx, my = love.mouse.getPosition()
-    love.graphics.line(windowWidth/2, windowHeight/2, mx, my)
 end
 
 return Board
