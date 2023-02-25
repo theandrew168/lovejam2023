@@ -317,15 +317,28 @@ function love.update(dt)
                     end
 
                     -- update global with selected tile
-                    if piece and piece.color == global.player then
-                        if not global.selected and not global.action then
+                    if not global.selected and not global.action then
+                        if piece and piece.color == global.player then
                             global.selected = piece
-                            print("selected", unpack(piece))
+                            print("select", unpack(piece))
                         end
                     end
 
                     -- TODO: highlight adjacent tile w/o pieces
-                    -- TODO: in one is clicked, move piece
+
+                    -- if one is clicked, move piece
+                    if global.selected then
+                        local d = dist(
+                            global.selected.tile[1], global.selected.tile[2],
+                            loc[2], loc[3]
+                        )
+                        if d > 0 and d < 2 then
+                            print("move")
+                            global.selected.tile = {loc[2], loc[3]}
+                            global.selected = nil
+                            global.action = true
+                        end
+                    end
                 end
             end
         end
@@ -336,11 +349,13 @@ function love.update(dt)
 
     -- handle piece rotation
     if love.keyboard.isDown("left") and global.selected then
+        print("rotate")
         local rot = global.selected.rotation - 1
         global.selected.rotation = rot < 1 and 4 or rot
         global.selected = nil
         global.action = true
     elseif love.keyboard.isDown("right") and global.selected then
+        print("rotate")
         local rot = global.selected.rotation + 1
         global.selected.rotation = rot > 4 and 1 or rot
         global.selected = nil
