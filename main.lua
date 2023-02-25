@@ -1,6 +1,16 @@
 local const = require("const")
 local global = {}
 
+local function clamp(x, min, max)
+    if x < min then
+        return min
+    elseif x > max then
+        return max
+    else
+        return x
+    end
+end
+
 local function dist(x1, y1, x2, y2)
     return ((x2-x1)^2+(y2-y1)^2)^0.5
 end
@@ -11,6 +21,14 @@ local function calcTileRect(x, y)
     local ww = const.size.tile
     local hh = const.size.tile
     return xx, yy, ww, hh
+end
+
+local function findPiece(board, x, y)
+    for i, p in ipairs(board) do
+        if p.tile[1] == x and p.tile[2] == y then
+            return i, p
+        end
+    end
 end
 
 local function buildLaserPath(board, player)
@@ -39,13 +57,7 @@ local function buildLaserPath(board, player)
         end
 
         -- check if a piece is here
-        local piece = nil
-        for _, p in ipairs(board) do
-            if p.tile[1] == cur[1] and p.tile[2] == cur[2] then
-                piece = p
-                break
-            end
-        end
+        local _, piece = findPiece(board, cur[1], cur[2])
 
         -- check if piece is hit or laser bounces
         if piece ~= nil then
@@ -109,21 +121,7 @@ local function buildLaserPath(board, player)
         end
     end
 
-    for _, p in ipairs(path) do
-        print(unpack(p))
-    end
-
     return path
-end
-
-local function clamp(x, min, max)
-    if x < min then
-        return min
-    elseif x > max then
-        return max
-    else
-        return x
-    end
 end
 
 local function buildLaserLine(tiles)
@@ -248,7 +246,6 @@ local function drawPiece(p)
     end
 end
 
-
 function love.load(arg)
     -- load the funky egyptian font
     global.font = love.graphics.newFont("font/hieros.ttf", 36)
@@ -308,13 +305,7 @@ function love.update(dt)
                 -- handle tile selection
                 if what == "tile" then
                     -- find selected tile
-                    local piece = nil
-                    for _, p in ipairs(global.board) do
-                        if p.tile[1] == loc[2] and p.tile[2] == loc[3] then
-                            piece = p
-                            break
-                        end
-                    end
+                    local _, piece = findPiece(global.board, loc[2], loc[3])
 
                     -- update global with selected tile
                     if not global.selected and not global.action then
@@ -326,8 +317,8 @@ function love.update(dt)
 
                     -- TODO: highlight adjacent tile w/o pieces
 
-                    -- if one is clicked, move piece
-                    if global.selected then
+                    -- if one is clicked and no piece is there, move
+                    if global.selected and not piece then
                         local d = dist(
                             global.selected.tile[1], global.selected.tile[2],
                             loc[2], loc[3]
@@ -374,11 +365,9 @@ function love.update(dt)
 
             -- remove any deleted piece
             local last = table.remove(global.laser.path)
-            for i, p in ipairs(global.board) do
-                if p.tile[1] == last[1] and p.tile[2] == last[2] then
-                    table.remove(global.board, i)
-                    break
-                end
+            local i, p = findPiece(global.board, last[1], last[2])
+            if i and p then
+                table.remove(global.board, i)
             end
 
             -- determine and declare game over
