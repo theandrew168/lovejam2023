@@ -259,6 +259,7 @@ function love.load(arg)
 
     -- initialize the game state
     global.player = "silver"
+    global.action = false
     global.laser = {
         active = false,
         time = nil,
@@ -304,12 +305,27 @@ function love.update(dt)
                     global.laser.line = buildLaserLine(global.laser.path)
                 end
 
-                -- TODO: handle tile selection
+                -- handle tile selection
                 if what == "tile" then
+                    -- find selected tile
+                    local piece = nil
+                    for _, p in ipairs(global.board) do
+                        if p.tile[1] == loc[2] and p.tile[2] == loc[3] then
+                            piece = p
+                            break
+                        end
+                    end
+
                     -- update global with selected tile
-                    -- highlight adjacent tile w/o pieces
-                    -- in one is clicked, move piece
-                    -- else check for L/R arrows to rotate
+                    if piece and piece.color == global.player then
+                        if not global.selected and not global.action then
+                            global.selected = piece
+                            print("selected", unpack(piece))
+                        end
+                    end
+
+                    -- TODO: highlight adjacent tile w/o pieces
+                    -- TODO: in one is clicked, move piece
                 end
             end
         end
@@ -318,6 +334,20 @@ function love.update(dt)
         down = false
     end
 
+    -- handle piece rotation
+    if love.keyboard.isDown("left") and global.selected then
+        local rot = global.selected.rotation - 1
+        global.selected.rotation = rot < 1 and 4 or rot
+        global.selected = nil
+        global.action = true
+    elseif love.keyboard.isDown("right") and global.selected then
+        local rot = global.selected.rotation + 1
+        global.selected.rotation = rot > 4 and 1 or rot
+        global.selected = nil
+        global.action = true
+    end
+
+    -- handle quitting the game
     if love.keyboard.isDown("escape") then
         love.event.quit()
     end
@@ -357,8 +387,9 @@ function love.update(dt)
                 love.event.quit()
             end
 
-            -- switch player text
+            -- switch player turn
             global.player = global.player == "red" and "silver" or "red"
+            global.action = false
         end
     end
 end
