@@ -134,11 +134,11 @@ end
 
 function love.load(arg)
     -- load the funky egyptian font
-    local font = love.graphics.newFont("font/hieros.ttf", 36)
-    love.graphics.setFont(font)
+    global.font = love.graphics.newFont("font/hieros.ttf", 36)
+    love.graphics.setFont(global.font)
 
-    -- load the music / sfx
-    soundtrack = love.audio.newSource("music/test.mp3", "stream")
+    -- load the music
+    global.music = love.audio.newSource("music/test.mp3", "stream")
 
     -- initialize the game state
     global.player = "silver"
@@ -166,8 +166,8 @@ end
 local down = false
 function love.update(dt)
     -- keep background music playing indefinitely
-    if not soundtrack:isPlaying() then
-        love.audio.play(soundtrack)
+    if not global.music:isPlaying() then
+        love.audio.play(global.music)
     end
 
     local x, y = love.mouse.getPosition()
@@ -284,6 +284,7 @@ function love.draw(dt)
         drawPiece(p)
     end
 
+    -- draw laser
     if global.laser.active then
         love.graphics.setColor(const.color.laser)
         love.graphics.setLineWidth(4)
@@ -291,6 +292,11 @@ function love.draw(dt)
     end
 
     -- font test
+    local text = "Welcome to Khet!"
+    local w, h = global.font:getWidth(text), global.font:getHeight(text)
     love.graphics.setColor(1,1,1)
-    love.graphics.print("Hello Khet!", windowWidth / 2 - 48, 8)
+    love.graphics.print(text,
+        (windowWidth / 2) - (w / 2),
+        (const.size.edge - h) / 2
+    )
 end
