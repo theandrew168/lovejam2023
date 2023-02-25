@@ -74,7 +74,7 @@ local const = {
     layout = {
         classic = {
             {tile = {5, 1},  kind = "obelisk", color = "red",    rotation = 1},
-            {tile = {6, 1},  kind = "pharoah", color = "red",    rotation = 3},
+            {tile = {6, 1},  kind = "pharaoh", color = "red",    rotation = 3},
             {tile = {7, 1},  kind = "obelisk", color = "red",    rotation = 1},
             {tile = {8, 1},  kind = "pyramid", color = "red",    rotation = 2},
             {tile = {3, 2},  kind = "pyramid", color = "red",    rotation = 3},
@@ -95,7 +95,7 @@ local const = {
             {tile = {8, 7},  kind = "pyramid", color = "silver", rotation = 1},
             {tile = {3, 8},  kind = "pyramid", color = "silver", rotation = 4},
             {tile = {4, 8},  kind = "obelisk", color = "silver", rotation = 1},
-            {tile = {5, 8},  kind = "pharoah", color = "silver", rotation = 1},
+            {tile = {5, 8},  kind = "pharaoh", color = "silver", rotation = 1},
             {tile = {6, 8},  kind = "obelisk", color = "silver", rotation = 1},
         },
     }

@@ -44,6 +44,38 @@ function pick(x, y)
     return nil
 end
 
+function drawPiece(p)
+    if p.color == "red" then
+        love.graphics.setColor(const.color.red)
+    else
+        love.graphics.setColor(const.color.silver)
+    end
+
+    local xx, yy, ww, hh = calcTileRect(p.tile[1], p.tile[2])
+    love.graphics.rectangle("fill", xx, yy, ww, hh)
+
+    local t = const.size.tile
+
+    -- rotation: 1, 2, 3, 4
+    -- obelisk: all the same
+    -- pharaoh: up, right, down, left
+    -- pyramid: NE, SE, SW, NW (mirror direction)
+    -- djed:    NE, SE, SW, NW (mirror direction)
+
+    love.graphics.setColor(0, 0, 0)
+    if p.kind == "pyramid" then
+        love.graphics.line(xx, yy, xx + ww, yy + hh)
+        love.graphics.line(xx, yy + hh, xx + (ww / 2), yy + (hh / 2))
+    elseif p.kind == "obelisk" then
+        love.graphics.rectangle("line", xx + (ww / 4), yy + (hh / 4), ww / 2, hh / 2)
+    elseif p.kind == "djed" then
+        love.graphics.line(xx, yy, xx + ww, yy + hh)
+    elseif p.kind == "pharaoh" then
+        love.graphics.line(xx, yy + (hh / 2), xx + ww, yy + (hh / 2))
+        love.graphics.circle("line", xx + (ww / 2), yy + (hh / 2), ww / 4)
+    end
+end
+
 function Board.new()
   local board = {}
   setmetatable(board, Board)
@@ -65,8 +97,9 @@ function Board:update(dt)
     else
         down = false
     end
+
     if love.keyboard.isDown("escape") then
-        return "pause"
+        return "pausemenu"
     end
 end
 
@@ -125,14 +158,7 @@ function Board:draw(dt)
 
     -- draw pieces
     for _, p in ipairs(global.tiles) do
-        if p.color == "red" then
-            love.graphics.setColor(1,0,1)
-        else
-            love.graphics.setColor(1,0,1)
-        end
-
-        local xx, yy, ww, hh = calcTileRect(p.tile[1], p.tile[2])
-        love.graphics.rectangle("fill", xx, yy, ww, hh)
+        drawPiece(p)
     end
 
     -- font test
