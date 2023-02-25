@@ -2,10 +2,10 @@ local PauseMenu = {}
 PauseMenu.__index = PauseMenu
 
 function PauseMenu.new()
-  local pauseMenu = {}
-  setmetatable(pauseMenu, PauseMenu)
+    local pauseMenu = {}
+    setmetatable(pauseMenu, PauseMenu)
 
-  return pauseMenu
+    return pauseMenu
 end
 
 function PauseMenu:update(dt)

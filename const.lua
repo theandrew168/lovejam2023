@@ -20,7 +20,7 @@
 local const = {
     color = {
         black = {0.0, 0.0, 0.0},
-        laser = {0.7, 0.2, 0.2},
+        laser = {0.8, 0.1, 0.1},
         darkGray = {0.2, 0.2, 0.2},
         lightGray = {0.3, 0.3, 0.3},
         red = {0.6, 0.2, 0.2},

@@ -2,8 +2,8 @@ local const = require("const")
 local global = require("global")
 
 local MainMenu = require("state.mainmenu")
-local Board = require("state.board")
 local PauseMenu = require("state.pausemenu")
+local Board = require("state.board")
 
 
 -- states:
@@ -42,6 +42,7 @@ function love.load(arg)
     soundtrack = love.audio.newSource("sounds/test.mp3", "stream")
 
     -- initialize the game state
+    global.player = 1
     global.board = {}
     local mode = const.layout.classic
     for _, p in ipairs(mode) do
@@ -56,21 +57,21 @@ function love.load(arg)
 end
 
 function love.update(dt)
+    -- keep background music playing indefinitely
+    if not soundtrack:isPlaying() then
+        love.audio.play(soundtrack)
+    end
+
     local states = {
         mainmenu = MainMenu,
         pausemenu = PauseMenu,
+--        gameover = GameOver,
         board = Board,
-        selected = Selected,
-        gameover = GameOver,
     }
 
     local transition = state:update(dt)
     if transition ~= nil then
         state = states[transition].new()
-    end
-
-    if not soundtrack:isPlaying() then
-        love.audio.play(soundtrack)
     end
 end
 

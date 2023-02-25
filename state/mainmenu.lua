@@ -2,10 +2,10 @@ local MainMenu = {}
 MainMenu.__index = MainMenu
 
 function MainMenu.new()
-  local mainmenu = {}
-  setmetatable(mainmenu, MainMenu)
+    local mainmenu = {}
+    setmetatable(mainmenu, MainMenu)
 
-  return mainmenu
+    return mainmenu
 end
 
 function MainMenu:update(dt)

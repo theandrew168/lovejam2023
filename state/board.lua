@@ -1,40 +1,29 @@
 local const = require("const")
 local global = require("global")
+local util = require("util")
 
 local Board = {}
 Board.__index = Board
-
-function calcTileRect(x, y)
-    local xx = const.size.box * (x - 1) + const.size.border + const.size.edge
-    local yy = const.size.box * (y - 1) + const.size.border + const.size.edge
-    local ww = const.size.tile
-    local hh = const.size.tile
-    return xx, yy, ww, hh
-end
-
-function dist(x1, y1, x2, y2)
-    return ((x2-x1)^2+(y2-y1)^2)^0.5
-end
 
 function pick(x, y)
     local windowWidth, windowHeight = love.graphics.getDimensions()
 
     local redX, redY = const.button.xoff, const.button.yoff
-    local redDist = dist(x, y, redX, redY)
+    local redDist = util.dist(x, y, redX, redY)
     if redDist <= const.button.radius then
         return {"laser", "red"}
     end
 
     local silverX = windowWidth - const.button.xoff
     local silverY = windowHeight - const.button.yoff
-    local silverDist = dist(x, y, silverX, silverY)
+    local silverDist = util.dist(x, y, silverX, silverY)
     if silverDist <= const.button.radius then
         return {"laser", "silver"}
     end
 
     for ty = 1, const.board.height do
         for tx = 1, const.board.width do
-            local xx, yy, ww, hh = calcTileRect(tx, ty)
+            local xx, yy, ww, hh = util.calcTileRect(tx, ty)
             if x >= xx and x <= xx + ww and y >= yy and y <= yy + hh then
                 return {"tile", tx, ty}
             end
@@ -51,7 +40,7 @@ function drawPiece(p)
         love.graphics.setColor(const.color.silver)
     end
 
-    local xx, yy, ww, hh = calcTileRect(p.tile[1], p.tile[2])
+    local xx, yy, ww, hh = util.calcTileRect(p.tile[1], p.tile[2])
     love.graphics.rectangle("fill", xx, yy, ww, hh)
 
     local t = const.size.tile
@@ -63,6 +52,8 @@ function drawPiece(p)
     -- djed:    NE, SE, SW, NW (mirror direction)
 
     love.graphics.setColor(0, 0, 0)
+    love.graphics.setLineWidth(2)
+
     if p.kind == "obelisk" then
         -- no visible rotation
         love.graphics.rectangle("line", xx + (ww / 4), yy + (hh / 4), ww / 2, hh / 2)
@@ -101,12 +92,20 @@ function drawPiece(p)
 end
 
 function Board.new()
-  local board = {}
-  setmetatable(board, Board)
+    local board = {}
+    setmetatable(board, Board)
 
-  return board
+    board.laser = {
+        active = false,
+        time = nil,
+        done = nil,
+        path = nil
+    }
+
+    return board
 end
 
+local down = false
 function Board:update(dt)
     local x, y = love.mouse.getPosition()
     if love.mouse.isDown(1) then
@@ -115,6 +114,27 @@ function Board:update(dt)
             if loc then
                 -- TODO: transition to "selection" or "laser"
                 print(x, y, loc[1], loc[2], loc[3])
+
+                local what = loc[1]
+                if what == "laser" then
+                    self.laser.active = true
+                    self.laser.time = love.timer.getTime()
+                    self.laser.done = self.laser.time + 2
+                    self.laser.path = util.buildLaserPath({
+                        {1,1},
+                        {1,2},
+                        {1,3},
+                        {1,4},
+                        {2,4},
+                        {3,4},
+                        {3,5},
+                        {2,5},
+                        {1,5},
+                        {1,6},
+                        {1,7},
+                        {1,8},
+                    })
+                end
             end
         end
         down = true
@@ -124,6 +144,13 @@ function Board:update(dt)
 
     if love.keyboard.isDown("escape") then
         return "pausemenu"
+    end
+
+    if self.laser.active then
+        self.laser.time = self.laser.time + dt
+        if self.laser.time > self.laser.done then
+            self.laser.active = false
+        end
     end
 end
 
@@ -161,7 +188,7 @@ function Board:draw(dt)
     love.graphics.setColor(const.color.lightGray)
     for y = 1, const.board.height do
         for x = 1, const.board.width do
-            local xx, yy, ww, hh = calcTileRect(x, y)
+            local xx, yy, ww, hh = util.calcTileRect(x, y)
             love.graphics.rectangle("fill", xx, yy, ww, hh)
         end
     end
@@ -169,20 +196,26 @@ function Board:draw(dt)
     -- draw red tiles
     love.graphics.setColor(const.color.red)
     for _, p in ipairs(const.board.red) do
-        local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        local xx, yy, ww, hh = util.calcTileRect(p[1], p[2])
         love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- draw silver tiles
     love.graphics.setColor(const.color.silver)
     for _, p in ipairs(const.board.silver) do
-        local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        local xx, yy, ww, hh = util.calcTileRect(p[1], p[2])
         love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- draw pieces
     for _, p in ipairs(global.board) do
         drawPiece(p)
+    end
+
+    if self.laser.active then
+        love.graphics.setColor(const.color.laser)
+        love.graphics.setLineWidth(6)
+        love.graphics.line(self.laser.path)
     end
 
     -- font test
