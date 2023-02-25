@@ -112,7 +112,6 @@ function Board:update(dt)
         if not down then
             local loc = pick(x, y)
             if loc then
-                -- TODO: transition to "selection" or "laser"
                 print(x, y, loc[1], loc[2], loc[3])
 
                 local what = loc[1]
@@ -135,6 +134,14 @@ function Board:update(dt)
                         {1,8},
                     })
                 end
+
+                -- TODO: handle tile selection
+                if what == "tile" then
+                    -- update global with selected tile
+                    -- highlight adjacent tile w/o pieces
+                    -- in one is clicked, move piece
+                    -- else check for L/R arrows to rotate
+                end
             end
         end
         down = true
@@ -143,13 +150,16 @@ function Board:update(dt)
     end
 
     if love.keyboard.isDown("escape") then
-        return "pausemenu"
+        love.event.quit()
+--        return "pausemenu"
     end
 
     if self.laser.active then
         self.laser.time = self.laser.time + dt
         if self.laser.time > self.laser.done then
             self.laser.active = false
+            -- TODO: remove any deleted piece
+            -- TODO: determine and declare game over
         end
     end
 end
