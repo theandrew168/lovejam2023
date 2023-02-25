@@ -51,7 +51,6 @@ local function buildLaserPath(board, player)
         if piece ~= nil then
             -- check for pieces that can't survive a hit
             if piece.kind == "pharaoh" or piece.kind == "obelisk" then
-                table.insert(path, cur)
                 break
             end
 
@@ -328,7 +327,14 @@ function love.update(dt)
         if global.laser.time > global.laser.done then
             global.laser.active = false
 
-            -- TODO: remove any deleted piece
+            -- remove any deleted piece
+            local last = table.remove(global.laser.path)
+            for i, p in ipairs(global.board) do
+                if p.tile[1] == last[1] and p.tile[2] == last[2] then
+                    table.remove(global.board, i)
+                    break
+                end
+            end
 
             -- determine and declare game over
             local redHasPharaoh, silverHasPharaoh = false, false

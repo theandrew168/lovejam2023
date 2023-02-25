@@ -97,6 +97,8 @@ local const = {
             {tile = {4, 8},  kind = "obelisk", color = "silver", rotation = 1},
             {tile = {5, 8},  kind = "pharaoh", color = "silver", rotation = 1},
             {tile = {6, 8},  kind = "obelisk", color = "silver", rotation = 1},
+
+            {tile = {10, 1},  kind = "obelisk", color = "silver", rotation = 1},
         },
     }
 }
