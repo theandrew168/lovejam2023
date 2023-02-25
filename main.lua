@@ -13,25 +13,125 @@ local function calcTileRect(x, y)
     return xx, yy, ww, hh
 end
 
-local function buildLaserPath(board)
-    local path = {
-        {1,1},
-        {1,2},
-        {1,3},
-        {1,4},
-        {2,4},
-        {3,4},
-        {3,5},
-        {2,5},
-        {1,5},
-        {1,6},
-        {1,7},
-        {1,8},
+local function buildLaserPath(board, player)
+    local delta = {
+        up = {0,-1},
+        down = {0,1},
+        left = {-1,0},
+        right = {1,0},
     }
+
+    -- determine initial tile and direction
+    local cur = player == "red" and {1,1} or {10,8}
+    local dir = player == "red" and "down" or "up"
+
+    local path = {}
+    table.insert(path, cur)
+
+    while true do
+        -- advance to the next tile (allow one tile of overflow)
+        cur = {cur[1] + delta[dir][1], cur[2] + delta[dir][2]}
+        table.insert(path, cur)
+
+        -- check bounds
+        if cur[1] < 1 or cur[1] > 10 or cur[2] < 1 or cur[2] > 8 then
+            break
+        end
+
+        -- check if a piece is here
+        local piece = nil
+        for _, p in ipairs(board) do
+            if p.tile[1] == cur[1] and p.tile[2] == cur[2] then
+                piece = p
+                break
+            end
+        end
+
+        -- check if piece is hit or laser bounces
+        if piece ~= nil then
+            -- check for pieces that can't survive a hit
+            if piece.kind == "pharaoh" or piece.kind == "obelisk" then
+                table.insert(path, cur)
+                break
+            end
+
+            if piece.kind == "pyramid" then
+                if piece.rotation == 1 then
+                    -- destroyed
+                    if dir == "up" or dir == "right" then
+                        break
+                    end
+                    -- reflected
+                    dir = dir == "down" and "right" or "up"
+                elseif piece.rotation == 2 then
+                    -- destroyed
+                    if dir == "down" or dir == "right" then
+                        break
+                    end
+                    -- reflected
+                    dir = dir == "up" and "right" or "down"
+                elseif piece.rotation == 3 then
+                    -- destroyed
+                    if dir == "down" or dir == "left" then
+                        break
+                    end
+                    -- reflected
+                    dir = dir == "up" and "left" or "down"
+                elseif piece.rotation == 4 then
+                    -- destroyed
+                    if dir == "up" or dir == "left" then
+                        break
+                    end
+                    -- reflected
+                    dir = dir == "down" and "left" or "up"
+                end
+            end
+
+            if piece.kind == "djed" then
+                -- djeds always reflect
+                if piece.rotation == 1 or piece.rotation == 3 then
+                    local reflect = {
+                        up = "left",
+                        down = "right",
+                        left = "up",
+                        right = "down",
+                    }
+                    dir = reflect[dir]
+                elseif piece.rotation == 2 or piece.rotation == 4 then
+                    local reflect = {
+                        up = "right",
+                        down = "left",
+                        left = "down",
+                        right = "up",
+                    }
+                    dir = reflect[dir]
+                end
+            end
+        end
+    end
+
+    for _, p in ipairs(path) do
+        print(unpack(p))
+    end
+
     return path
 end
 
+local function clamp(x, min, max)
+    if x < min then
+        return min
+    elseif x > max then
+        return max
+    else
+        return x
+    end
+end
+
 local function buildLaserLine(tiles)
+    local windowWidth, windowHeight = love.graphics.getDimensions()
+    local minX, maxX = const.size.edge, windowWidth - const.size.edge
+    local minY, maxY = const.size.edge, windowHeight - const.size.edge
+
     local line = {}
     local idx = 1
 
@@ -54,8 +154,8 @@ local function buildLaserLine(tiles)
     while tiles[idx] ~= nil do
         local t = tiles[idx]
         local xx, yy, ww, hh = calcTileRect(t[1], t[2])
-        table.insert(line, xx + (ww / 2))
-        table.insert(line, yy + (hh / 2))
+        table.insert(line, clamp(xx + (ww / 2), minX, maxX))
+        table.insert(line, clamp(yy + (hh / 2), minY, maxY))
 
         idx = idx + 1
     end
@@ -201,7 +301,7 @@ function love.update(dt)
                     global.laser.active = true
                     global.laser.time = love.timer.getTime()
                     global.laser.done = global.laser.time + 2
-                    global.laser.path = buildLaserPath(global.board)
+                    global.laser.path = buildLaserPath(global.board, global.player)
                     global.laser.line = buildLaserLine(global.laser.path)
                 end
 
