@@ -344,7 +344,7 @@ function love.update(dt)
                     -- if one is clicked, no piece is there, and it doesn't have
                     -- a color restriction, perform the move
                     if global.selected and not piece then
-                        if tc == "gray" or tc == global.selected.player then
+                        if tc == "gray" or tc == global.player then
                             local d = dist(
                                 global.selected.tile[1], global.selected.tile[2],
                                 loc[2], loc[3]
