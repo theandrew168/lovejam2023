@@ -188,11 +188,25 @@ local function pick(x, y)
     return nil
 end
 
+function applyGlow(color)
+    local delta = math.abs(math.sin(love.timer.getTime() * 5) / 8)
+    return {color[1] + delta, color[2] + delta, color[3] + delta}
+end
+
 local function drawPiece(p)
+    -- apply glow to current player's actionable pieces
     if p.color == "red" then
-        love.graphics.setColor(const.color.red)
-    else
-        love.graphics.setColor(const.color.silver)
+        local color = const.color.red
+        if global.player == "red" and not global.selected and not global.action then
+            color = applyGlow(color)
+        end
+        love.graphics.setColor(color)
+    elseif p.color == "silver"  then
+        local color = const.color.silver
+        if global.player == "silver" and not global.selected and not global.action then
+            color = applyGlow(color)
+        end
+        love.graphics.setColor(color)
     end
 
     local xx, yy, ww, hh = calcTileRect(p.tile[1], p.tile[2])
@@ -291,7 +305,7 @@ function love.update(dt)
         if not down then
             local loc = pick(x, y)
             if loc then
-                print(x, y, loc[1], loc[2], loc[3])
+--                print(x, y, loc[1], loc[2], loc[3])
 
                 local what = loc[1]
                 if what == "laser" and loc[2] == global.player then
@@ -311,23 +325,35 @@ function love.update(dt)
                     if not global.selected and not global.action then
                         if piece and piece.color == global.player then
                             global.selected = piece
-                            print("select", unpack(piece))
                         end
                     end
 
-                    -- TODO: highlight adjacent tile w/o pieces
+                    -- check the target tile's color
+                    local tc = "gray"
+                    for _, p in ipairs(const.board.red) do
+                        if p[1] == loc[2] and p[2] == loc[3] then
+                            tc = "red"
+                        end
+                    end
+                    for _, p in ipairs(const.board.silver) do
+                        if p[1] == loc[2] and p[2] == loc[3] then
+                            tc = "silver"
+                        end
+                    end
 
-                    -- if one is clicked and no piece is there, move
+                    -- if one is clicked, no piece is there, and it doesn't have
+                    -- a color restriction, perform the move
                     if global.selected and not piece then
-                        local d = dist(
-                            global.selected.tile[1], global.selected.tile[2],
-                            loc[2], loc[3]
-                        )
-                        if d > 0 and d < 2 then
-                            print("move")
-                            global.selected.tile = {loc[2], loc[3]}
-                            global.selected = nil
-                            global.action = true
+                        if tc == "gray" or tc == global.selected.player then
+                            local d = dist(
+                                global.selected.tile[1], global.selected.tile[2],
+                                loc[2], loc[3]
+                            )
+                            if d > 0 and d < 2 then
+                                global.selected.tile = {loc[2], loc[3]}
+                                global.selected = nil
+                                global.action = true
+                            end
                         end
                     end
                 end
@@ -340,21 +366,24 @@ function love.update(dt)
 
     -- handle piece rotation
     if love.keyboard.isDown("left") and global.selected then
-        print("rotate")
         local rot = global.selected.rotation - 1
         global.selected.rotation = rot < 1 and 4 or rot
         global.selected = nil
         global.action = true
     elseif love.keyboard.isDown("right") and global.selected then
-        print("rotate")
         local rot = global.selected.rotation + 1
         global.selected.rotation = rot > 4 and 1 or rot
         global.selected = nil
         global.action = true
     end
 
-    -- handle quitting the game
+    -- handle unselecting a piece
     if love.keyboard.isDown("escape") then
+        global.selected = nil
+    end
+
+    -- handle quitting the game
+    if love.keyboard.isDown("q") then
         love.event.quit()
     end
 
@@ -404,14 +433,25 @@ function love.draw(dt)
     -- draw background
     love.graphics.clear(const.color.black)
 
-    -- draw laser buttons
-    love.graphics.setColor(const.color.laser)
+    -- draw laser button (red player)
+    local color = const.color.laser
+    if global.player == "red" and global.action then
+        color = applyGlow(color)
+    end
+    love.graphics.setColor(color)
     love.graphics.circle("fill",
         -- top left
         const.button.xoff,
         const.button.yoff,
         const.button.radius
     )
+
+    -- draw laser button (silver player)
+    local color = const.color.laser
+    if global.player == "silver" and global.action then
+        color = applyGlow(color)
+    end
+    love.graphics.setColor(color)
     love.graphics.circle("fill",
         -- bottom right
         windowWidth - const.button.xoff,
@@ -429,25 +469,60 @@ function love.draw(dt)
     )
 
     -- draw tiles
-    love.graphics.setColor(const.color.lightGray)
     for y = 1, const.board.height do
         for x = 1, const.board.width do
             local xx, yy, ww, hh = calcTileRect(x, y)
+            local color = const.color.lightGray
+
+            -- apply glow to movable tiles around selected piece
+            if global.selected then
+                local sx, sy = global.selected.tile[1], global.selected.tile[2]
+                local sd = dist(x, y, sx, sy)
+                if sd > 0 and sd < 2 then
+                    color = applyGlow(color)
+                end
+            end
+
+            love.graphics.setColor(color)
             love.graphics.rectangle("fill", xx, yy, ww, hh)
         end
     end
 
     -- draw red tiles
-    love.graphics.setColor(const.color.red)
     for _, p in ipairs(const.board.red) do
         local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        local color = const.color.red
+
+        -- apply glow to movable tiles around selected piece
+        if global.selected then
+            local px, py = p[1], p[2]
+            local sx, sy = global.selected.tile[1], global.selected.tile[2]
+            local sd = dist(px, py, sx, sy)
+            if sd > 0 and sd < 2 and global.player == "red" then
+                color = applyGlow(color)
+            end
+        end
+
+        love.graphics.setColor(color)
         love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
     -- draw silver tiles
-    love.graphics.setColor(const.color.silver)
     for _, p in ipairs(const.board.silver) do
         local xx, yy, ww, hh = calcTileRect(p[1], p[2])
+        local color = const.color.silver
+
+        -- apply glow to movable tiles around selected piece
+        if global.selected then
+            local px, py = p[1], p[2]
+            local sx, sy = global.selected.tile[1], global.selected.tile[2]
+            local sd = dist(px, py, sx, sy)
+            if sd > 0 and sd < 2 and global.player == "silver" then
+                color = applyGlow(color)
+            end
+        end
+
+        love.graphics.setColor(color)
         love.graphics.rectangle("fill", xx, yy, ww, hh)
     end
 
